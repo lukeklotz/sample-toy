@@ -4,6 +4,9 @@
     let granulator: Granulator;
     let chunks: AudioChunk[] = [];
     let error: string | null = null;
+    let reverbWet: number = 0.5;
+    let reverbDecay: number = 2;
+
   
     async function handleFileChange(event: Event) {
       const input = event.target as HTMLInputElement;
@@ -12,12 +15,33 @@
           granulator = new Granulator();
           await granulator.loadAudio(input.files[0]);
           chunks = granulator.getChunks();
+          const params = granulator.getParameters();
+          reverbWet = params.reverbWet;
+          reverbDecay = params.reverbDecay;
           error = null;
         } catch (err) {
-          error = 'Failed to load or process audio file.';
-          console.error(err);
+          //error = 'Failed to load or process audio file.';
+          //console.error(err);
         }
       }
+    }
+
+    // Update reverb wet when slider changes
+    function handleReverbWetChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        reverbWet = parseFloat(input.value);
+        if (granulator) {
+            granulator.setReverbWet(reverbWet);
+        }
+    }
+
+    // Update reverb decay when slider changes
+    function handleReverbDecayChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        reverbDecay = parseFloat(input.value);
+        if (granulator) {
+            granulator.setReverbDecay(reverbDecay);
+        }
     }
   
     function playChunk(chunk: AudioChunk) {
@@ -25,17 +49,23 @@
     }
   </script>
   
-  <div class="flex h-screen">
+  <div class="flex h-screen font-mono">
     <!-- Left Panel -->
-    <div class="w-1/4 bg-gray-100 p-4 border-r border-gray-300">
-      <h1 class="text-2xl font-bold mb-4">Sample Toy</h1>
+    <div class="w-1/4 p-4 border-r border-black-700">
+      <h1 class="text-1xl mb-4">[ Sample Toy ]</h1>
   
       <input
         type="file"
         accept="audio/*"
         on:change={handleFileChange}
-        class="mb-4 block file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+        class="mb-2 block file:mr-4 file:py-2 file:rounded file:border-black file:text-black hover:file:bg-blue-600"
       />
+
+        <h2>[ reverb decay ]</h2>
+        <input type="range" id="reverb-decay" class="slider" min="0" max="20" value="10" step="0.5" on:input={handleReverbDecayChange}>
+        
+        <h2>[ reverb wet ]</h2>
+        <input type="range" id="reverb-wet" class="slider" min="0" max="1" value="0.5" step="0.05" on:input={handleReverbWetChange}>
   
       {#if error}
         <p class="text-red-500">{error}</p>

@@ -1,4 +1,6 @@
 // place files you want to import through the `$lib` alias in this folder.
+import { AudioEffect } from "./effects";
+import * as Tone from 'tone';
 
 export interface AudioChunk {
     start: number; 
@@ -11,13 +13,18 @@ export interface AudioChunk {
     private buffer: AudioBuffer | null = null;
     private chunks: AudioChunk[] = [];
     private currentSource: AudioBufferSourceNode | null = null;
+    private effect: AudioEffect;
   
     constructor() {
-      this.audioContext = new AudioContext();
+      //this.audioContext = new AudioContext();
+      this.audioContext = new(window.AudioContext)();
+      Tone.setContext(this.audioContext);
+      this.effect = new AudioEffect();
     }
   
     async loadAudio(file: File): Promise<void> {
       try {
+        await Tone.start();
         const arrayBuffer = await file.arrayBuffer();
         this.buffer = await this.audioContext.decodeAudioData(arrayBuffer);
         this.sliceIntoChunks(200);
@@ -75,14 +82,62 @@ export interface AudioChunk {
     playChunk(chunk: AudioChunk): void {
         // Stop any currently playing chunk
         if (this.currentSource) {
-          this.currentSource.stop();
-          this.currentSource.disconnect();
+            this.currentSource.stop();
+            this.currentSource.disconnect();
+            this.currentSource = null;
         }
-    
+
+        if(!chunk.buffer){
+            console.error('No buffer available for chunk');
+            return;
+        }
+
+        // Create new source node
+        this.currentSource = this.audioContext.createBufferSource();
+        this.currentSource.buffer = chunk.buffer;
+
+        // Connect to Tone.js effect chain using Tone.connect
+        Tone.connect(this.currentSource, this.effect.getEffectChainInput());
+
+        // Start playback
+        this.currentSource.start();
+        
+        /*
         // Create and play new chunk
         this.currentSource = this.audioContext.createBufferSource();
         this.currentSource.buffer = chunk.buffer;
-        this.currentSource.connect(this.audioContext.destination);
+        // Connect to effects chain
+        this.effect.connect(this.currentSource);
+        //this.currentSource.connect(this.audioContext.destination);
         this.currentSource.start();
+        */
       }
+
+    setReverbWet(value: number): void {
+        this.effect.setReverbWet(value);
+    }
+
+    setReverbDecay(value: number): void {
+        this.effect.setReverbDecay(value);
+    }
+
+    setBitCrusherBits(bits: number): void {
+        this.effect.setBitCrusherBits(bits);
+    }
+
+    setGainValue(value: number): void {
+        this.effect.setGainValue(value);
+    }
+
+    getEffectParameters() {
+        return this.effect.getEffectParameters();
+    }
+
+      stop(): void {
+        if (this.currentSource) {
+            this.currentSource.stop();
+            this.currentSource.disconnect();
+            this.currentSource = null;
+        }
+    }
   }
