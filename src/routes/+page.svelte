@@ -6,6 +6,9 @@
     let error: string | null = null;
     let reverbWet: number = 0.5;
     let reverbDecay: number = 2;
+    let fbDelayTime: number = 1;
+    let bitCrusherBits: number = 8;
+    let gain: number = 1;
 
   
     async function handleFileChange(event: Event) {
@@ -20,6 +23,7 @@
           reverbDecay = params.reverbDecay;
           error = null;
         } catch (err) {
+          //TODO: FIX BUG err always triggers
           //error = 'Failed to load or process audio file.';
           //console.error(err);
         }
@@ -41,6 +45,31 @@
         reverbDecay = parseFloat(input.value);
         if (granulator) {
             granulator.setReverbDecay(reverbDecay);
+        }
+    }
+
+    // Update bitCrusher bit amount
+    function handleBitCrusherBitChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        bitCrusherBits = parseFloat(input.value);
+        if (granulator) {
+            granulator.setBitCrusherBits(bitCrusherBits);
+        }
+    }
+
+    function handleFBDelayTimeChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        fbDelayTime = parseFloat(input.value);
+        if(granulator) {
+            granulator.setFBDelayTime(fbDelayTime);
+        }
+    }
+
+    function handleGainChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        gain = parseFloat(input.value);
+        if (granulator) {
+            granulator.setGainValue(gain);
         }
     }
   
@@ -66,7 +95,17 @@
         
         <h2>[ reverb wet ]</h2>
         <input type="range" id="reverb-wet" class="slider" min="0" max="1" value="0.5" step="0.05" on:input={handleReverbWetChange}>
+
+        <h2>[ feedback delay time ]</h2>
+        <input type="range" id="fb-delay-time" class="slider" min="0.01" max="4" value="1" step="0.05" on:input={handleFBDelayTimeChange}>
   
+        <h2>[ bit crusher bits ]</h2>
+        <input type="range" id="reverb-wet" class="slider" min="1" max="16" value="8" step="0.5" on:input={handleBitCrusherBitChange}>
+  
+        <h2>[ gain ]</h2>
+        <input type="range" id="reverb-wet" class="slider" min="0" max="1" value="0.7" step="0.01" on:input={handleGainChange}>
+  
+
       {#if error}
         <p class="text-red-500">{error}</p>
       {/if}

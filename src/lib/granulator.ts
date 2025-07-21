@@ -114,22 +114,27 @@ export interface AudioChunk {
       }
 
     setReverbWet(value: number): void {
-        this.effect.setReverbWet(value);
+        this.effect.reverb.wet.setValueAtTime(value, Tone.now());
     }
 
     setReverbDecay(value: number): void {
-        this.effect.setReverbDecay(value);
+        this.effect.reverb.decay = value;
+        this.effect.reverb.generate().catch((err)=> console.error('Error updating reverb decay', err));
     }
 
     setBitCrusherBits(bits: number): void {
-        this.effect.setBitCrusherBits(bits);
+        this.effect.bitCrusher.bits.setValueAtTime(bits, Tone.now());
+    }
+
+    setFBDelayTime(value: number): void {
+        this.effect.feedbackDelay.delayTime.setValueAtTime(value, Tone.now());
     }
 
     setGainValue(value: number): void {
-        this.effect.setGainValue(value);
+        this.effect.gain.gain.setValueAtTime(value, Tone.now());
     }
 
-    getEffectParameters() {
+    getParameters() {
         return this.effect.getEffectParameters();
     }
 
