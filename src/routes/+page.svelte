@@ -30,6 +30,16 @@
       }
     }
 
+    //update number of audio slices ("chunks")
+    async function updateChunks(event: Event) {
+      const input = event.target as HTMLInputElement;
+      const numChunks = parseFloat(input.value);
+      if(granulator) {
+        granulator.sliceIntoChunks(numChunks);
+        chunks = granulator.getChunks();
+      }
+    }
+
     // Update reverb wet when slider changes
     function handleReverbWetChange(event: Event) {
         const input = event.target as HTMLInputElement;
@@ -89,6 +99,9 @@
         on:change={handleFileChange}
         class="mb-2 block file:mr-4 file:py-2 file:rounded file:border-black file:text-black hover:file:bg-blue-600"
       />
+
+        <h2>[ # of chunks ]</h2>
+        <input type="range" id="chunks" class="slider" min="50" max="400" value="200" step="1" on:input={updateChunks}>
 
         <h2>[ reverb decay ]</h2>
         <input type="range" id="reverb-decay" class="slider" min="0" max="20" value="10" step="0.5" on:input={handleReverbDecayChange}>
