@@ -7,6 +7,8 @@
     let reverbWet: number = 0.5;
     let reverbDecay: number = 2;
     let fbDelayTime: number = 1;
+    let fbDelayFeedback: number = 0.5;
+    let fbDelayWet: number = 0.5;
     let bitCrusherBits: number = 8;
     let gain: number = 1;
 
@@ -75,6 +77,22 @@
         }
     }
 
+    function handleFBDelayFeedbackChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        fbDelayFeedback = parseFloat(input.value);
+        if(granulator) {
+            granulator.setFBDelayFeedback(fbDelayFeedback);
+        }
+    }
+
+    function handleFBDelayWetChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        fbDelayWet= parseFloat(input.value);
+        if(granulator) {
+            granulator.setFBDelayWet(fbDelayWet);
+        }
+    }
+
     function handleGainChange(event: Event) {
         const input = event.target as HTMLInputElement;
         gain = parseFloat(input.value);
@@ -103,17 +121,23 @@
         <h2>[ # of chunks ]</h2>
         <input type="range" id="chunks" class="slider" min="50" max="400" value="200" step="1" on:input={updateChunks}>
 
+        <h2>[ feedback delay time ]</h2>
+        <input type="range" id="fb-delay-time" class="slider" min="0.01" max="8" value="1" step="0.05" on:input={handleFBDelayTimeChange}>
+        
+        <h2>[ feedback delay amount ]</h2>
+        <input type="range" id="fb-delay-amount" class="slider" min="0.01" max="1" value="0.5" step="0.05" on:input={handleFBDelayFeedbackChange}>
+        
+        <h2>[ feedback delay wet ]</h2>
+        <input type="range" id="fb-delay-wet" class="slider" min="0.01" max="1" value="0.5" step="0.05" on:input={handleFBDelayWetChange}>
+  
+        <h2>[ bit crusher bits ]</h2>
+        <input type="range" id="reverb-wet" class="slider" min="1" max="16" value="8" step="0.5" on:input={handleBitCrusherBitChange}>
+
         <h2>[ reverb decay ]</h2>
         <input type="range" id="reverb-decay" class="slider" min="0" max="20" value="10" step="0.5" on:input={handleReverbDecayChange}>
         
         <h2>[ reverb wet ]</h2>
         <input type="range" id="reverb-wet" class="slider" min="0" max="1" value="0.5" step="0.05" on:input={handleReverbWetChange}>
-
-        <h2>[ feedback delay time ]</h2>
-        <input type="range" id="fb-delay-time" class="slider" min="0.01" max="4" value="1" step="0.05" on:input={handleFBDelayTimeChange}>
-  
-        <h2>[ bit crusher bits ]</h2>
-        <input type="range" id="reverb-wet" class="slider" min="1" max="16" value="8" step="0.5" on:input={handleBitCrusherBitChange}>
   
         <h2>[ gain ]</h2>
         <input type="range" id="reverb-wet" class="slider" min="0" max="1" value="0.7" step="0.01" on:input={handleGainChange}>

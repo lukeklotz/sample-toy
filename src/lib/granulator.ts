@@ -34,7 +34,7 @@ export interface AudioChunk {
       }
     }
   
-    private sliceIntoChunks(numChunks: number): void {
+    sliceIntoChunks(numChunks: number): void {
       if (!this.buffer) return;
   
       const duration = this.buffer.duration; 
@@ -128,6 +128,14 @@ export interface AudioChunk {
 
     setFBDelayTime(value: number): void {
         this.effect.feedbackDelay.delayTime.setValueAtTime(value, Tone.now());
+    }
+
+    setFBDelayFeedback(value: number): void {
+      this.effect.feedbackDelay.feedback.setValueAtTime(value, Tone.now());
+    }
+
+    setFBDelayWet(value: number): void {
+      this.effect.feedbackDelay.wet.setValueAtTime(value, Tone.now());
     }
 
     setGainValue(value: number): void {
