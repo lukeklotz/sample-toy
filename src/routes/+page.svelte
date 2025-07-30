@@ -3,7 +3,7 @@
   import { EnvelopeParams } from '$lib/envelope';
   import { onMount } from 'svelte';
 
-  let envelope: EnvelopeParams;
+  	let envelope: EnvelopeParams;
 	let granulator: Granulator;
 	let chunks: AudioChunk[] = [];
 	let error: string | null = null;
@@ -14,7 +14,7 @@
 	let fbDelayWet: number = 0.5;
 	let bitCrusherBits: number = 8;
 	let gain: number = 1;
-  let isRecording: boolean = false;
+  	let isRecording: boolean = false;
 
 	async function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -73,6 +73,7 @@
   async function handleAttackChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const atk = parseFloat(input.value);
+	console.log(atk);
     if (envelope) {
       envelope.setAttack(atk);
     }
@@ -171,7 +172,7 @@
 		}
 	}
 
-	function playChunk(chunk: AudioChunk) {
+	function playChunk(chunk: AudioChunk, envelope: EnvelopeParams) {
 		granulator.playChunk(chunk, envelope);
 	}
 </script>
@@ -216,7 +217,7 @@
             type="range"
             id="envelope-attack"
             min="0"
-            max="5"
+            max="2"
             value="0"
             step="0.01"
             on:input={handleAttackChange}
@@ -230,7 +231,7 @@
             type="range"
             id="envelope-decay"
             min="0"
-            max="5"
+            max="2"
             value="0"
             step="0.01"
             on:input={handleDecayChange}
@@ -398,7 +399,7 @@
 				{#each chunks as chunk, i}
 					<div
 						class="h-10 w-10 transform cursor-pointer rounded-[6px] border-[2px] border-black transition-transform duration-100 hover:scale-110 hover:bg-blue-700"
-						on:mouseenter={() => playChunk(chunk)}
+						on:mouseenter={() => playChunk(chunk, envelope)}
 						title="Chunk {i + 1}: {chunk.start.toFixed(2)}s - {chunk.duration.toFixed(2)}s"
 					></div>
 				{/each}
