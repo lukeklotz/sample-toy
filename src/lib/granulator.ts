@@ -120,6 +120,17 @@ export class Granulator {
 		}
 	}
 
+  record(isRecording: boolean): void {
+    if(isRecording) {
+      //record
+      //save recording
+      console.log("recording in progress..");
+    }
+    else if(!isRecording) {
+      console.log("recording stopped");
+    }
+  }
+
 	//TODO: Add error handling to all setters
 
 	setReverbWet(value: number): void {

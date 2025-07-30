@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Granulator, type AudioChunk } from '$lib/granulator';
   import { EnvelopeParams } from '$lib/envelope';
+  import { onMount } from 'svelte';
 
   let envelope: EnvelopeParams;
 	let granulator: Granulator;
@@ -13,6 +14,7 @@
 	let fbDelayWet: number = 0.5;
 	let bitCrusherBits: number = 8;
 	let gain: number = 1;
+  let isRecording: boolean = false;
 
 	async function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -33,6 +35,39 @@
 			}
 		}
 	}
+
+  async function handleRecord(event: KeyboardEvent) {
+    //start
+    if (event.key === "r" && !isRecording) {
+      if (granulator) {
+        granulator.record(true);
+        isRecording = true;
+      }
+    }
+    //stop
+    else if(event.key === "r" && isRecording) {
+      if (granulator) {
+        granulator.record(false);
+        isRecording = false;
+      }
+    }
+  }
+
+  //onMount is a listener that responds to keyboard input
+  //onMount enables keyboard input functionality
+  onMount(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'r') {
+        handleRecord(event);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  });
 
   //Envelope control
   async function handleAttackChange(event: Event) {
@@ -155,12 +190,12 @@
 
 		<!-- # of Chunks -->
     <details class="mb-4 rounded-md border bg-gray-50 p-4">
-      <summary class="cursor-pointer text-sm font-semibold">[ # of Chunks ]</summary>
+      <summary class="cursor-pointer text-sm font-semibold">[ # of slices ]</summary>
       <div class="mt-3">
-        <label for="chunks" class="mb-1 block text-xs">Amount</label>
+        <label for="slices" class="mb-1 block text-xs">Amount</label>
         <input
           type="range"
-          id="chunks"
+          id="slices"
           min="50"
           max="400"
           value="200"
@@ -243,9 +278,9 @@
 						type="range"
 						id="fb-delay-time"
 						min="0.01"
-						max="8"
-						value="1"
-						step="0.05"
+						max="1"
+						value="0.01"
+						step="0.01"
 						on:input={handleFBDelayTimeChange}
 						class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
 					/>
