@@ -15,12 +15,20 @@ export class Granulator {
 	private chunks: AudioChunk[] = [];
 	private currentSource: AudioBufferSourceNode | null = null;
 	private effect: AudioEffect;
+  private envelope: Tone.AmplitudeEnvelope;
 
 	constructor() {
-		//this.audioContext = new AudioContext();
 		this.audioContext = new window.AudioContext();
 		Tone.setContext(this.audioContext);
 		this.effect = new AudioEffect();
+    this.envelope = new Tone.AmplitudeEnvelope({
+      attack: 0.01, 
+      decay: 0.1,
+      sustain: 1.0,
+      release: 0.1
+    }).toDestination();
+    this.envelope.connect(this.effect.getEffectChainInput());
+    
 	}
 
 	async loadAudio(file: File): Promise<void> {
@@ -75,26 +83,36 @@ export class Granulator {
 	getChunks(): AudioChunk[] {
 		return this.chunks;
 	}
-
-	playChunk(chunk: AudioChunk, level: EnvelopeParams): void {
-		// Stop any currently playing chunk
+/*
+	async playChunk(chunk: AudioChunk, level: EnvelopeParams): Promise<void> {
+		// Stop any currently playing chunk  
+    
 		if (this.currentSource) {
 			this.currentSource.stop();
 			this.currentSource.disconnect();
 			this.currentSource = null;
 		}
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
 
 		if (!chunk.buffer) {
 			console.error('No buffer available for chunk');
 			return;
 		}
-
+    
 		const envelope = new Tone.AmplitudeEnvelope({
 			attack: level.getAttack(),
 			decay: level.getDecay(),
 			sustain: level.getSustain(),
 			release: level.getRelease()
 		}).toDestination();
+    
+
+    this.envelope.attack = level.getAttack();
+    this.envelope.decay = level.getDecay();
+    this.envelope.sustain = level.getSustain();
+    this.envelope.release = level.getRelease();
 
 		// Create new source node
 		this.currentSource = this.audioContext.createBufferSource();
@@ -102,8 +120,8 @@ export class Granulator {
 
 		// connect raw sample slice to envelope
 		try {
-			Tone.connect(this.currentSource, envelope);
-			envelope.connect(this.effect.getEffectChainInput());
+			Tone.connect(this.currentSource, this.envelope);
+			//this.envelope.connect(this.effect.getEffectChainInput());
 		} catch (error) {
 			console.error('Error connecting nodes:', error);
 			return;
@@ -113,13 +131,71 @@ export class Granulator {
 		const now = Tone.now();
 		try {
 			this.currentSource.start(now);
-			envelope.triggerAttack(now);
+			this.envelope.triggerAttack(now);
 		} catch (error) {
 			console.error('Error starting playback:', error);
 			return;
 		}
 	}
+*/
 
+async playChunk(chunk: AudioChunk, level: EnvelopeParams): Promise<void> {
+  console.time('playChunk');
+  console.time('resumeContext');
+  if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+  }
+  console.timeEnd('resumeContext');
+
+  console.time('stopPrevious');
+  if (this.currentSource) {
+      this.currentSource.stop();
+      this.currentSource.disconnect();
+      this.currentSource = null;
+  }
+  console.timeEnd('stopPrevious');
+
+  if (!chunk.buffer) {
+      console.error('No buffer available for chunk');
+      return;
+  }
+
+  console.time('updateEnvelope');
+  this.envelope.set({
+    attack: level.getAttack(),
+    decay: level.getDecay(),
+    sustain: level.getSustain(),
+    release: level.getRelease()
+  });
+  console.timeEnd('updateEnvelope');
+
+  console.time('createSource');
+  this.currentSource = this.audioContext.createBufferSource();
+  this.currentSource.buffer = chunk.buffer;
+  console.timeEnd('createSource');
+
+  console.time('connectNodes');
+  try {
+      Tone.connect(this.currentSource, this.envelope);
+  } catch (error) {
+      console.error('Error connecting nodes:', error);
+      return;
+  }
+  console.timeEnd('connectNodes');
+
+  console.time('startPlayback');
+  const now = Tone.now();
+  try {
+      this.currentSource.start(now);
+      this.envelope.triggerAttack(now);
+  } catch (error) {
+      console.error('Error starting playback:', error);
+      return;
+  }
+  console.timeEnd('startPlayback');
+
+  console.timeEnd('playChunk');
+}
   record(isRecording: boolean): void {
     if(isRecording) {
       //record
@@ -130,6 +206,14 @@ export class Granulator {
       console.log("recording stopped");
     }
   }
+
+  stop(): void {
+		if (this.currentSource) {
+			this.currentSource.stop();
+			this.currentSource.disconnect();
+			this.currentSource = null;
+		}
+	}
 
 	//TODO: Add error handling to all setters
 
@@ -164,13 +248,5 @@ export class Granulator {
 
 	getParameters() {
 		return this.effect.getEffectParameters();
-	}
-
-	stop(): void {
-		if (this.currentSource) {
-			this.currentSource.stop();
-			this.currentSource.disconnect();
-			this.currentSource = null;
-		}
 	}
 }
