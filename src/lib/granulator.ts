@@ -192,6 +192,7 @@ async playChunk(chunk: AudioChunk, level: EnvelopeParams): Promise<void> {
       console.error('Error starting playback:', error);
       return;
   }
+  
   console.timeEnd('startPlayback');
 
   console.timeEnd('playChunk');
