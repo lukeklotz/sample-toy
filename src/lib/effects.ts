@@ -6,6 +6,7 @@ export class AudioEffect {
 	gain: Tone.Gain;
 	feedbackDelay: Tone.FeedbackDelay;
 	effectChain: Tone.ToneAudioNode;
+	effectsList: Tone.ToneAudioNode[];
 
 	constructor() {
 		this.reverb = new Tone.Reverb({ decay: 5, wet: 0.5 });
@@ -18,6 +19,29 @@ export class AudioEffect {
 			this.gain,
 			Tone.getDestination()
 		);
+
+		this.effectsList = [
+			this.bitCrusher,
+			this.feedbackDelay,
+			this.reverb,
+			this.gain,
+		]
+
+		this.buildEffectChain();
+	}
+
+	buildEffectChain() {
+		this.effectsList.forEach(effect => effect.disconnect());
+
+		this.effectsList.reduce((prev, current) => {
+			prev.connect(current);
+			return current; 
+		}).connect(Tone.getDestination());
+	}
+
+	reorderEffects(newEffectsList: any) {
+		this.effectsList = newEffectsList;
+		this.buildEffectChain();
 	}
 
 	connect(source: Tone.ToneAudioNode | AudioBufferSourceNode): void {
@@ -31,39 +55,6 @@ export class AudioEffect {
 	getEffectChainInput(): Tone.ToneAudioNode {
 		return this.bitCrusher; // The input of the effect chain is the bitCrusher
 	}
-
-	/*
-    setReverbDecay(value: number): void {
-        this.reverb.decay = value;
-        this.reverb.generate()
-                   .catch((err) => console.error('Error updating reverb decay', err));
-    }
-
-    setReverbWet(value: number): void {
-        this.reverb.wet.setValueAtTime(value, Tone.now());
-    }
-
-    setBitCrusherBits(bits: number): void {
-        this.bitCrusher.bits.setValueAtTime(bits, Tone.now());
-    }
-
-    /*
-    setFBDelayTime(value: number): void {
-        this.feedbackDelay.delayTime.setValueAtTime(value, Tone.now());
-    }
-
-    setFBDelayFeedback(value: number): void {
-        this.feedbackDelay.feedback.setValueAtTime(value, Tone.now());
-    }
-
-    setFBDelayWet(value: number): void {
-        this.feedbackDelay.feedback.setValueAtTime(value, Tone.now());
-    }
-
-    setGainValue(n: number): void {
-        this.gain.gain.setValueAtTime(n, Tone.now());
-    }
-    */
 
 	getEffectParameters() {
 		return {

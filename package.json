@@ -42,6 +42,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
+		"svelte-dnd-action": "^0.9.64",
 		"tone": "^15.1.22"
 	}
 }

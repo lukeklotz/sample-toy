@@ -1,12 +1,24 @@
 <script lang="ts">
 	import { Granulator, type AudioChunk } from '$lib/granulator';
-  import { EnvelopeParams } from '$lib/envelope';
-  import { onMount } from 'svelte';
+  	import { EnvelopeParams } from '$lib/envelope';
+  	import { onMount } from 'svelte';
+	import { AudioEffect } from '$lib/effects';
+	import type { ToneAudioNode } from 'tone';
+	import { writable } from 'svelte/store';
+	import { dndzone } from 'svelte-dnd-action';
+	import { derived, get } from 'svelte/store';
+	import * as Tone from 'tone';
 
+
+	// objects
   	let envelope: EnvelopeParams;
 	let granulator: Granulator;
+	export const effects = writable<AudioEffect | null>(null);
 	let chunks: AudioChunk[] = [];
 	let error: string | null = null;
+	//let effectsMeta: { name: string; type: string }[] = [];
+
+	//values
 	let reverbWet: number = 0.5;
 	let reverbDecay: number = 2;
 	let fbDelayTime: number = 1;
@@ -16,12 +28,62 @@
 	let gain: number = 1;
   	let isRecording: boolean = false;
 
+	export const effectOrder = writable<ToneAudioNode[] | null>([]);
+
+
+	onMount(async () => {
+    	await Tone.start();
+    	effects.set(new AudioEffect());
+  	});
+
+	export const effectsMeta = writable<{ name: string; type: string }[]>([
+    { name: "Feedback Delay", type: "feedbackDelay" },
+    { name: "Bit Crusher", type: "bitCrusher" },
+    { name: "Reverb", type: "reverb" },
+]);
+
+	/*
+	let effectsMeta = derived(effects, ($effects) =>
+		$effects
+			? [
+				{ name: "Feedback Delay", type: "feedbackDelay" },
+				{ name: "Bit Crusher", type: "bitCrusher" },
+				{ name: "Reverb", type: "reverb" },
+			]
+			: []
+	);
+	*/
+
+	function getNodeByType(type: string) {
+		const fx = get(effects);
+		if (!fx) return null;
+		return type === "feedbackDelay" ? fx.feedbackDelay
+			: type === "bitCrusher" ? fx.bitCrusher
+			: type === "reverb" ? fx.reverb
+			: null;
+	}
+
+	async function setupEffects() {
+		await Tone.start();
+		const fx = new AudioEffect();
+
+		effects.set(fx);
+
+		// initialize store now that effects exist
+		effectOrder.set([
+			fx.bitCrusher,
+			fx.feedbackDelay,
+			fx.reverb,
+			fx.gain
+		]);
+	}
+
 	async function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files[0]) {
 			try {
 				granulator = new Granulator();
-        envelope = new EnvelopeParams();
+        		envelope = new EnvelopeParams();
 				await granulator.loadAudio(input.files[0]);
 				chunks = granulator.getChunks();
 				const params = granulator.getParameters();
@@ -52,6 +114,42 @@
       }
     }
   }
+
+  /**
+  * Effect ordering logic start
+  * 
+  *  
+  */
+
+
+  function getEffectsMeta() {
+	if (!effects) return [];
+		return [
+			{ name: "Feedback Delay", node: effects.feedbackDelay, type: "feedbackDelay" },
+			{ name: "Bit Crusher", node: effects.bitCrusher, type: "bitCrusher" },
+			{ name: "Reverb", node: effects.reverb, type: "reverb" }
+		];
+	}
+	function handleSliderChange(effectType: string, param: string, value: number) {
+		const effect = getNodeByType(effectType);
+
+		console.log(effect);
+		if (!effect) return;
+
+		// Update the correct parameter dynamically
+		if (param in effect) {
+			(effect as any)[param].value !== undefined
+				? (effect as any)[param].value = value
+				: (effect as any)[param] = value;
+		}
+	}
+
+
+  /**
+  * Effect ordering logic end
+  * 
+  *  
+  */
 
   //onMount is a listener that responds to keyboard input
   //onMount enables keyboard input functionality
@@ -269,7 +367,14 @@
       </div>
     </details>
 
+		<!-- - - - - - - - - - - - - - -->
+		<!---->
+		<!-- - - - Effects Start - - - -->
+		<!---->
+		<!-- - - - - - - - - - - - - - -->
+
 		<!-- Feedback Delay -->
+		<!--
 		<details class="mb-4 rounded-md border bg-gray-50 p-4">
 			<summary class="cursor-pointer text-sm font-semibold">[ Feedback Delay ]</summary>
 			<div class="mt-3 space-y-3">
@@ -317,7 +422,6 @@
 			</div>
 		</details>
 
-		<!-- Bit Crusher -->
 		<details class="mb-4 rounded-md border bg-gray-50 p-4">
 			<summary class="cursor-pointer text-sm font-semibold">[ Bit Crusher ]</summary>
 			<div class="mt-3">
@@ -335,7 +439,6 @@
 			</div>
 		</details>
 
-		<!-- Reverb -->
 		<details class="mb-4 rounded-md border bg-gray-50 p-4">
 			<summary class="cursor-pointer text-sm font-semibold">[ Reverb ]</summary>
 			<div class="mt-3 space-y-3">
@@ -369,6 +472,62 @@
 			</div>
 		</details>
 
+	-->
+
+		<!-- - - - - - - - - - - - - - -->
+		<!---->
+		<!-- - - - Effects End - - - -->
+		<!---->
+		<!-- - - - - - - - - - - - - - -->
+	
+		<div use:dndzone={{ items: $effectsMeta, flipDurationMs: 200 }}
+			on:consider={({ detail }) => effectsMeta.set(detail.items)}
+			on:finalize={({ detail }) => {
+				effectsMeta.set(detail.items);
+
+				// Update the store so Tone.js chain reorders
+				effectOrder.set(
+					detail.items.map(e => getNodeByType(e.type)!)
+					);
+			}}
+		>
+		{#each $effectsMeta as effect (effect.type)}
+			<details class="mb-4 rounded-md border bg-gray-50 p-4">
+			<summary class="cursor-pointer text-sm font-semibold">[ {effect.name} ]</summary>
+
+			{#if effect.type === "feedbackDelay"}
+				<label>Time</label>
+				<input type="range" min="0.01" max="1" step="0.01"
+					on:input={(e) => handleSliderChange("feedbackDelay", "delayTime", parseFloat(e.target.value))} />
+
+				<label>Feedback</label>
+				<input type="range" min="0" max="1" step="0.01"
+					on:input={(e) => handleSliderChange("feedbackDelay", "feedback", parseFloat(e.target.value))} />
+
+				<label>Wet</label>
+				<input type="range" min="0" max="1" step="0.01"
+					on:input={(e) => handleSliderChange("feedbackDelay", "wet", parseFloat(e.target.value))} />
+			{/if}
+
+			{#if effect.type === "bitCrusher"}
+				<label>Bits</label>
+				<input type="range" min="1" max="16" step="0.5"
+					on:input={(e) => handleSliderChange("bitCrusher", "bits", parseFloat(e.target.value))} />
+			{/if}
+
+			{#if effect.type === "reverb"}
+				<label>Decay</label>
+				<input type="range" min="0" max="20" step="0.5"
+					on:input={(e) => handleSliderChange("reverb", "decay", parseFloat(e.target.value))} />
+
+				<label>Wet</label>
+				<input type="range" min="0" max="1" step="0.05"
+					on:input={(e) => handleSliderChange("reverb", "wet", parseFloat(e.target.value))} />
+			{/if}
+			</details>
+		{/each}
+		</div>
+   
 		<!-- Gain -->
     <details class="mb-4 rounded-md border bg-gray-50 p-4">
       <summary class="cursor-pointer text-sm font-semibold">[ Gain ]</summary>
