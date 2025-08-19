@@ -150,6 +150,23 @@ export class Granulator {
     }
   }
 
+  updateEffectOrder(effectTypes: string[]): void {
+    // Map effect type strings to actual Tone effect instances
+    const newOrder = effectTypes.map(type => {
+        switch (type) {
+            case "bitCrusher": return this.effect.bitCrusher;
+            case "feedbackDelay": return this.effect.feedbackDelay;
+            case "reverb": return this.effect.reverb;
+            case "gain": return this.effect.gain;
+            default:
+                console.warn(`Unknown effect type: ${type}`);
+                return null;
+        }
+    });
+
+    this.effect.reorderEffects(newOrder);
+}
+
   stop(): void {
 		if (this.currentSource) {
 			this.currentSource.stop();

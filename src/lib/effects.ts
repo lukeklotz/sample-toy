@@ -33,6 +33,7 @@ export class AudioEffect {
 	buildEffectChain() {
 		this.effectsList.forEach(effect => effect.disconnect());
 
+		console.log("effect list: ", this.effectsList)
 		this.effectsList.reduce((prev, current) => {
 			prev.connect(current);
 			return current; 
