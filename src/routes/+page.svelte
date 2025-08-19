@@ -1,14 +1,17 @@
-import { dndzone } from 'svelte-dnd-action';
 <script lang="ts">
 	import { State } from '$lib/state';
 	import { dndzone } from 'svelte-dnd-action';
-	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';
+	import { nanoid } from 'nanoid';
 
 	let state: State;
+	state = new State();
 
-	onMount(() => {
-		state = new State();
-	});
+	export const effectsMeta = writable([
+		{ id: nanoid(), name: 'Bit Crusher', type: 'bitCrusher' },
+		{ id: nanoid(), name: 'Feedback Delay', type: 'feedbackDelay' },
+		{ id: nanoid(), name: 'Reverb', type: 'reverb' }
+	]);
 </script>
 
 <div class="flex h-screen font-mono">
@@ -112,7 +115,7 @@ import { dndzone } from 'svelte-dnd-action';
 			effectsMeta.set(detail.items);
 			granulator.updateEffectOrder(detail.items.map(e => e.type))
 			effectOrder.set(
-				detail.items.map(e => getNodeByType(e.type)!)
+				detail.items.map(e => state.getNodeByType(e.type)!)
 				);
 		}}
 	>
