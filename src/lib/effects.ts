@@ -32,17 +32,19 @@ export class AudioEffect {
 
 	buildEffectChain() {
 		this.effectsList.forEach(effect => effect.disconnect());
-
-		console.log("effect list: ", this.effectsList)
 		this.effectsList.reduce((prev, current) => {
 			prev.connect(current);
 			return current; 
 		}).connect(Tone.getDestination());
 	}
 
-	reorderEffects(newEffectsList: any) {
-		this.effectsList = newEffectsList;
-		this.buildEffectChain();
+	reorderEffects(newEffectsList: Tone.ToneAudioNode[]) {
+		try {
+			this.effectsList = newEffectsList;
+			this.buildEffectChain();
+		} catch (err) {
+			console.error("Failed to reorder effects:", err);
+		}
 	}
 
 	connect(source: Tone.ToneAudioNode | AudioBufferSourceNode): void {
@@ -54,7 +56,7 @@ export class AudioEffect {
 	}
 
 	getEffectChainInput(): Tone.ToneAudioNode {
-		return this.bitCrusher; // The input of the effect chain is the bitCrusher
+		return this.bitCrusher; 
 	}
 
 	getEffectParameters() {

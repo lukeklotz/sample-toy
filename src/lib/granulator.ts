@@ -2,6 +2,7 @@
 import { AudioEffect } from './effects';
 import { EnvelopeParams } from './envelope';
 import * as Tone from 'tone';
+import { browser } from '$app/environment';
 
 export interface AudioChunk {
 	start: number;
@@ -15,27 +16,79 @@ export class Granulator {
 	private chunks: AudioChunk[] = [];
 	private currentSource: AudioBufferSourceNode | null = null;
 	private effect: AudioEffect;
-  private envelope: Tone.AmplitudeEnvelope;
+  	private envelope: Tone.AmplitudeEnvelope;
 
+	/*
 	constructor() {
-		this.audioContext = new window.AudioContext();
+		this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 		Tone.setContext(this.audioContext);
 		this.effect = new AudioEffect();
     
-    this.envelope = new Tone.AmplitudeEnvelope({
-      attack: 0.5, 
-      decay: 0.1,
-      sustain: 1.0,
-      release: 0.1
-    }).toDestination();
-    this.envelope.connect(this.effect.getEffectChainInput());
+		this.envelope = new Tone.AmplitudeEnvelope({
+			attack: 0.5, 
+			decay: 0.1,
+			sustain: 1.0,
+			release: 0.1
+    	}).toDestination();
+
+    	this.envelope.connect(this.effect.getEffectChainInput());
+
+		console.log("granulator object created");
+	}
+	*/
+
+	constructor() {
+		if (!browser) {
+			throw new Error('Granulator can only be created in browser environment');
+		}
+
+		try {
+			// Use the proper way to create AudioContext
+			this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+			
+			console.log('AudioContext created:', this.audioContext.state);
+			
+			// Set Tone.js context
+			Tone.setContext(this.audioContext);
+			console.log('Tone context set');
+			
+			// Initialize effects
+			this.effect = new AudioEffect();
+			console.log('AudioEffect created');
+			
+			// Create envelope
+			this.envelope = new Tone.AmplitudeEnvelope({
+				attack: 0.5, 
+				decay: 0.1,
+				sustain: 1.0,
+				release: 0.1
+			}).toDestination();
+			console.log('Envelope created');
+
+			this.envelope.connect(this.effect.getEffectChainInput());
+			console.log('Envelope connected to effect chain');
+
+			console.log("Granulator object created successfully");
+		} catch (error) {
+			console.error('Error creating Granulator:', error);
+			throw error;
+		}
 	}
 
 	async loadAudio(file: File): Promise<void> {
 		try {
+			// Ensure audio context is running
+			if (this.audioContext.state === 'suspended') {
+				await this.audioContext.resume();
+			}
+			
 			await Tone.start();
+			console.log('Loading audio file:', file.name);
+			
 			const arrayBuffer = await file.arrayBuffer();
 			this.buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+			
+			console.log('Audio decoded successfully, duration:', this.buffer.duration);
 			this.sliceIntoChunks(200);
 		} catch (error) {
 			console.error('Error loading audio:', error);
@@ -152,7 +205,7 @@ export class Granulator {
 
   updateEffectOrder(effectTypes: string[]): void {
     // Map effect type strings to actual Tone effect instances
-    const newOrder = effectTypes.map(type => {
+    const newOrder: (Tone.ToneAudioNode | null)[] = effectTypes.map(type => {
         switch (type) {
             case "bitCrusher": return this.effect.bitCrusher;
             case "feedbackDelay": return this.effect.feedbackDelay;
@@ -164,7 +217,7 @@ export class Granulator {
         }
     });
 
-    this.effect.reorderEffects(newOrder);
+    this.effect.reorderEffects(newOrder.filter((n): n is Tone.ToneAudioNode => n !== null));
 }
 
   stop(): void {

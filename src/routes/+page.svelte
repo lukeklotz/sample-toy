@@ -3,15 +3,66 @@
 	import { dndzone } from 'svelte-dnd-action';
 	import { writable } from 'svelte/store';
 	import { nanoid } from 'nanoid';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { type AudioChunk } from "$lib/granulator"
 
-	let state: State;
-	state = new State();
+	let state: State | null = null;
+	let error: string | null = null;
+	let chunks: AudioChunk[] = []
 
 	export const effectsMeta = writable([
 		{ id: nanoid(), name: 'Bit Crusher', type: 'bitCrusher' },
 		{ id: nanoid(), name: 'Feedback Delay', type: 'feedbackDelay' },
 		{ id: nanoid(), name: 'Reverb', type: 'reverb' }
 	]);
+
+	// Function to sync chunks with state
+	function updateChunks() {
+		if (state) {
+			chunks = state.getChunks();
+			console.log('Chunks updated:', chunks.length);
+		}
+	}
+
+	// Wrapper for file change that updates chunks
+	async function handleFileChange(event: Event) {
+		if (!state) return;
+		
+		try {
+			await state.handleFileChange(event);
+			updateChunks(); // Update chunks after file is loaded
+		} catch (err) {
+			console.error('Error handling file change:', err);
+		}
+	}
+
+	// Wrapper for chunk slider that updates chunks
+	function handleChunkSlider(event: Event) {
+		if (!state) return;
+		
+		state.updateChunks(event);
+		updateChunks(); // Update chunks after slider change
+	}
+
+	onMount(async () => {
+		if (browser) {
+			try {
+				state = new State();
+				console.log("State object created");
+				
+				// Wait a bit for async initialization if needed
+				setTimeout(() => {
+					updateChunks(); // Initial update
+				}, 100);
+			} catch (err) {
+				console.error("Error creating state:", err);
+				error = "Failed to create audio engine";
+			}
+		} else {
+			console.error("browser null");
+		}
+	});
 </script>
 
 <div class="flex h-screen font-mono">
@@ -19,10 +70,11 @@
 	<div class="border-black-700 w-1/4 border-r p-4">
 		<h1 class="text-1xl mb-4">[ Sample Toy ]</h1>
 
+		{#if state}
 		<input
 			type="file"
 			accept="audio/*"
-			on:change={state.handleFileChange}
+			on:change={handleFileChange}
 			class="mb-2 block file:mr-4 file:rounded file:border-black file:py-2 file:text-black hover:file:bg-blue-600"
 		/>
 
@@ -38,7 +90,7 @@
           max="400"
           value="200"
           step="1"
-          on:input={state.updateChunks}
+          on:input={handleChunkSlider}
           class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
         />
       </div>
@@ -57,7 +109,7 @@
             max="2"
             value="0"
             step="0.01"
-            on:input={state.handleAttackChange}
+            on:input={state?.handleAttackChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
           />
         </div>
@@ -71,7 +123,7 @@
             max="2"
             value="0"
             step="0.01"
-            on:input={state.handleDecayChange}
+            on:input={state?.handleDecayChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
           />
         </div>
@@ -85,7 +137,7 @@
             max="1"
             value="1"
             step="0.01"
-            on:input={state.handleSustainChange}
+            on:input={state?.handleSustainChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
           />
         </div>
@@ -99,7 +151,7 @@
             max="5"
             value="0"
             step="0.01"
-            on:input={state.handleReleaseChange}
+            on:input={state?.handleReleaseChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
           />
         </div>
@@ -107,16 +159,14 @@
     </details>
 
 
-	<!--TODO: update dndzone compatibility with new state class-->
+	<!--TODO: update dndzone compatibility with state class-->
 
 	<div use:dndzone={{ items: $effectsMeta, flipDurationMs: 200 }}
 		on:consider={({ detail }) => effectsMeta.set(detail.items)}
 		on:finalize={({ detail }) => {
 			effectsMeta.set(detail.items);
-			granulator.updateEffectOrder(detail.items.map(e => e.type))
-			effectOrder.set(
-				detail.items.map(e => state.getNodeByType(e.type)!)
-				);
+			const effectTypes = detail.items.map(e => e.type);
+        	state?.updateEffectOrder(effectTypes);
 		}}
 	>
 		{#each $effectsMeta as effect (effect.id)}
@@ -126,31 +176,31 @@
 			{#if effect.type === "feedbackDelay"}
 				<label>Time</label>
 				<input type="range" min="0.01" max="1" step="0.01"
-					on:input={(e) => handleSliderChange(granulator, "feedbackDelay", "delayTime", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("feedbackDelay", "delayTime", parseFloat(e.target.value))} />
 
 				<label>Feedback</label>
 				<input type="range" min="0" max="1" step="0.01"
-					on:input={(e) => handleSliderChange(granulator, "feedbackDelay", "feedback", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("feedbackDelay", "feedback", parseFloat(e.target.value))} />
 
 				<label>Wet</label>
 				<input type="range" min="0" max="1" step="0.01"
-					on:input={(e) => handleSliderChange(granulator, "feedbackDelay", "wet", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("feedbackDelay", "wet", parseFloat(e.target.value))} />
 			{/if}
 
 			{#if effect.type === "bitCrusher"}
 				<label>Bits</label>
 				<input type="range" min="1" max="16" step="0.5"
-					on:input={(e) => handleSliderChange(granulator, "bitCrusher", "bits", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("bitCrusher", "bits", parseFloat(e.target.value))} />
 			{/if}
 
 			{#if effect.type === "reverb"}
 				<label>Decay</label>
 				<input type="range" min="0" max="20" step="0.5"
-					on:input={(e) => handleSliderChange(granulator, "reverb", "decay", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("reverb", "decay", parseFloat(e.target.value))} />
 
 				<label>Wet</label>
 				<input type="range" min="0" max="1" step="0.05"
-					on:input={(e) => handleSliderChange(granulator, "reverb", "wet", parseFloat(e.target.value))} />
+					on:input={(e) => state?.handleSliderChange("reverb", "wet", parseFloat(e.target.value))} />
 			{/if}
 			</details>
 		{/each}
@@ -168,11 +218,17 @@
           max="1"
           value="0.7"
           step="0.01"
-          on:input={handleGainChange}
+          on:input={state?.handleGainChange}
           class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
         />
       </div>
     </details>
+
+		{:else}
+			<div class="flex items-center justify-center h-32">
+				<p class="text-gray-500">Loading audio engine...</p>
+			</div>
+		{/if}
 
 		{#if error}
 			<p class="text-red-500">{error}</p>
@@ -181,16 +237,22 @@
 
 	<!-- Right Panel (Granulator / Chunks Grid) -->
 	<div class="flex-1 overflow-auto p-4">
-		{#if chunks.length > 0}
-			<div class="grid w-full max-w-full grid-cols-20 grid-rows-6 gap-2">
-				{#each chunks as chunk, i}
-					<div
-						class="h-10 w-10 transform cursor-pointer rounded-[6px] border-[2px] border-black transition-transform duration-100 hover:scale-110 hover:bg-blue-700"
-						on:mouseenter={() => playChunk(chunk, envelope)}
-						title="Chunk {i + 1}: {chunk.start.toFixed(2)}s - {chunk.duration.toFixed(2)}s"
-					></div>
-				{/each}
-			</div>
+		{#if state}
+			{#if chunks.length > 0}
+				<div class="grid w-full max-w-full grid-cols-20 grid-rows-6 gap-2">
+					{#each chunks as chunk, i}
+						<div
+							class="h-10 w-10 transform cursor-pointer rounded-[6px] border-[2px] border-black transition-transform duration-100 hover:scale-110 hover:bg-blue-700"
+							on:mouseenter={() => state?.playChunk(chunk, state.getEnvelope())}
+							title="Chunk {i + 1}: {chunk.start.toFixed(2)}s - {chunk.duration.toFixed(2)}s"
+						></div>
+					{/each}
+				</div>
+			{:else}
+				<div class="flex items-center justify-center h-full">
+					<p class="text-gray-500">Load an audio file to see audio slices</p>
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>
