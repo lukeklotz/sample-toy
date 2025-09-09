@@ -5,7 +5,7 @@ export class AudioEffect {
 	bitCrusher: Tone.BitCrusher;
 	gain: Tone.Gain;
 	feedbackDelay: Tone.FeedbackDelay;
-	effectChain: Tone.ToneAudioNode;
+	effectChain: Tone.ToneAudioNode | null;
 	effectsList: Tone.ToneAudioNode[];
 
 	constructor() {
@@ -13,12 +13,16 @@ export class AudioEffect {
 		this.bitCrusher = new Tone.BitCrusher({ bits: 8 });
 		this.gain = new Tone.Gain(1);
 		this.feedbackDelay = new Tone.FeedbackDelay({ delayTime: 0.3, feedback: 0.5, wet: 0.5 });
+		/*
 		this.effectChain = this.bitCrusher.chain(
 			this.feedbackDelay,
 			this.reverb,
 			this.gain,
 			Tone.getDestination()
 		);
+		*/
+
+		this.effectChain = null;
 
 		this.effectsList = [
 			this.bitCrusher,
@@ -32,15 +36,24 @@ export class AudioEffect {
 
 	buildEffectChain() {
 		this.effectsList.forEach(effect => effect.disconnect());
-		this.effectsList.reduce((prev, current) => {
-			prev.connect(current);
-			return current; 
-		}).connect(Tone.getDestination());
+
+        this.effectChain = this.effectsList[0];
+
+		for (let i = 0; i < this.effectsList.length - 1; i++) {
+			this.effectsList[i].connect(this.effectsList[i + 1]);
+		}
+
+		this.effectsList[this.effectsList.length - 1].connect(Tone.getDestination());
 	}
 
 	reorderEffects(newEffectsList: Tone.ToneAudioNode[]) {
 		try {
-			this.effectsList = newEffectsList;
+			// Validate newEffectsList
+            if (!newEffectsList.every(effect => effect instanceof Tone.ToneAudioNode)) {
+                throw new Error('Invalid effects in newEffectsList');
+            }
+
+			this.effectsList = [...newEffectsList]; // Create a copy to avoid reference issues
 			this.buildEffectChain();
 		} catch (err) {
 			console.error("Failed to reorder effects:", err);
@@ -48,6 +61,10 @@ export class AudioEffect {
 	}
 
 	connect(source: Tone.ToneAudioNode | AudioBufferSourceNode): void {
+		if (!this.effectChain) {
+			console.error('NO effect chain available');
+			return;
+		}
 		if (source instanceof AudioBufferSourceNode) {
 			Tone.connect(source, this.effectChain);
 		} else {
@@ -55,17 +72,17 @@ export class AudioEffect {
 		}
 	}
 
-	getEffectChainInput(): Tone.ToneAudioNode {
-		return this.bitCrusher; 
+	getEffectChainInput(): Tone.ToneAudioNode | null {
+		return this.effectChain; 
 	}
 
 	getEffectParameters() {
 		return {
 			reverbWet: this.reverb.wet.value,
 			reverbDecay: this.reverb.decay as number,
-			fbDelayTime: this.feedbackDelay.delayTime,
-			fbDelayFeedback: this.feedbackDelay.feedback,
-			fbDelayWet: this.feedbackDelay.wet,
+			fbDelayTime: this.feedbackDelay.delayTime.value,
+			fbDelayFeedback: this.feedbackDelay.feedback.value,
+			fbDelayWet: this.feedbackDelay.wet.value,
 			bitCrusherBits: this.bitCrusher.bits.value,
 			gainAmount: this.gain.gain.value
 		};

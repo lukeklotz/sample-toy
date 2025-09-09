@@ -26,11 +26,11 @@ export class State {
 
     constructor() {
         this.envelope = new EnvelopeParams();
-        //this.granulator = new Granulator();
         this.chunks = [];
         this.error = null;
-        //this.effects.set(new AudioEffect());
         this.effectParams = new AudioEffect();
+        //this.effects.set(new AudioEffect());
+        //this.granulator = new Granulator();
         //Tone.start();
 
         this.handleFileChange = this.handleFileChange.bind(this);

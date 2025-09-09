@@ -10,6 +10,14 @@ export interface AudioChunk {
 	buffer: AudioBuffer;
 }
 
+/*
+note:
+	This is actually just a sampler, not a granulator.
+	The original goal was to make a granulator, but starting with a sampler
+	felt easier. The long term goal is to turn this into a granulator, so 
+	I'm just leaving the name as is.
+*/
+
 export class Granulator {
 	private audioContext: AudioContext;
 	private buffer: AudioBuffer | null = null;
@@ -43,18 +51,11 @@ export class Granulator {
 		}
 
 		try {
-			// Use the proper way to create AudioContext
 			this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-			
-			console.log('AudioContext created:', this.audioContext.state);
-			
-			// Set Tone.js context
 			Tone.setContext(this.audioContext);
-			console.log('Tone context set');
 			
 			// Initialize effects
 			this.effect = new AudioEffect();
-			console.log('AudioEffect created');
 			
 			// Create envelope
 			this.envelope = new Tone.AmplitudeEnvelope({
@@ -62,12 +63,14 @@ export class Granulator {
 				decay: 0.1,
 				sustain: 1.0,
 				release: 0.1
-			}).toDestination();
-			console.log('Envelope created');
+			});
 
-			this.envelope.connect(this.effect.getEffectChainInput());
-			console.log('Envelope connected to effect chain');
-
+			const effectInput = this.effect.getEffectChainInput();
+			if (effectInput) {
+				this.envelope.connect(effectInput);
+			} else {
+				throw new Error('No effect chain input available')
+			}
 			console.log("Granulator object created successfully");
 		} catch (error) {
 			console.error('Error creating Granulator:', error);
@@ -145,26 +148,27 @@ export class Granulator {
 			this.currentSource.disconnect();
 			this.currentSource = null;
 		}
-    if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
-    }
 
-		if (!chunk.buffer) {
-			console.error('No buffer available for chunk');
-			return;
+		if (this.audioContext.state === 'suspended') {
+			await this.audioContext.resume();
 		}
-    /*
-		const envelope = new Tone.AmplitudeEnvelope({
-			attack: level.getAttack(),
-			decay: level.getDecay(),
-			sustain: level.getSustain(),
-			release: level.getRelease()
-		}).toDestination();
-    */
-    this.envelope.attack = level.getAttack();
-    this.envelope.decay = level.getDecay();
-    this.envelope.sustain = level.getSustain();
-    this.envelope.release = level.getRelease();
+
+			if (!chunk.buffer) {
+				console.error('No buffer available for chunk');
+				return;
+			}
+		/*
+			const envelope = new Tone.AmplitudeEnvelope({
+				attack: level.getAttack(),
+				decay: level.getDecay(),
+				sustain: level.getSustain(),
+				release: level.getRelease()
+			}).toDestination();
+		*/
+		this.envelope.attack = level.getAttack();
+		this.envelope.decay = level.getDecay();
+		this.envelope.sustain = level.getSustain();
+		this.envelope.release = level.getRelease();
 
 
 		// Create new source node
@@ -174,7 +178,7 @@ export class Granulator {
 		// connect raw sample slice to envelope
 		try {
 			Tone.connect(this.currentSource, this.envelope);
-      //Tone.connect(this.currentSource, this.effect.getEffectChainInput());
+      		//Tone.connect(this.currentSource, this.effect.getEffectChainInput());
 			//this.envelope.connect(this.effect.getEffectChainInput());
 		} catch (error) {
 			console.error('Error connecting nodes:', error);
@@ -192,6 +196,8 @@ export class Granulator {
 		}
 	}
 
+
+  // Incomplete function
   record(isRecording: boolean): void {
     if(isRecording) {
       //record
@@ -205,12 +211,12 @@ export class Granulator {
 
   updateEffectOrder(effectTypes: string[]): void {
     // Map effect type strings to actual Tone effect instances
+
     const newOrder: (Tone.ToneAudioNode | null)[] = effectTypes.map(type => {
         switch (type) {
             case "bitCrusher": return this.effect.bitCrusher;
             case "feedbackDelay": return this.effect.feedbackDelay;
             case "reverb": return this.effect.reverb;
-            case "gain": return this.effect.gain;
             default:
                 console.warn(`Unknown effect type: ${type}`);
                 return null;
