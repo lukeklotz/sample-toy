@@ -5,6 +5,8 @@ export class AudioEffect {
 	bitCrusher: Tone.BitCrusher;
 	gain: Tone.Gain;
 	feedbackDelay: Tone.FeedbackDelay;
+	freqShifter: Tone.FrequencyShifter;
+
 	effectChain: Tone.ToneAudioNode | null;
 	effectsList: Tone.ToneAudioNode[];
 
@@ -13,6 +15,8 @@ export class AudioEffect {
 		this.bitCrusher = new Tone.BitCrusher({ bits: 8 });
 		this.gain = new Tone.Gain(1);
 		this.feedbackDelay = new Tone.FeedbackDelay({ delayTime: 0.3, feedback: 0.5, wet: 0.5 });
+		this.freqShifter = new Tone.FrequencyShifter({ frequency: 240, wet: 1});
+		
 		/*
 		this.effectChain = this.bitCrusher.chain(
 			this.feedbackDelay,
@@ -25,6 +29,7 @@ export class AudioEffect {
 		this.effectChain = null;
 
 		this.effectsList = [
+			this.freqShifter,
 			this.bitCrusher,
 			this.feedbackDelay,
 			this.reverb,
@@ -78,13 +83,24 @@ export class AudioEffect {
 
 	getEffectParameters() {
 		return {
-			reverbWet: this.reverb.wet.value,
-			reverbDecay: this.reverb.decay as number,
-			fbDelayTime: this.feedbackDelay.delayTime.value,
+			//reverb
+			reverbWet: 		 this.reverb.wet.value,
+			reverbDecay: 	 this.reverb.decay as number,
+
+			//delay
+			fbDelayTime: 	 this.feedbackDelay.delayTime.value,
 			fbDelayFeedback: this.feedbackDelay.feedback.value,
-			fbDelayWet: this.feedbackDelay.wet.value,
-			bitCrusherBits: this.bitCrusher.bits.value,
-			gainAmount: this.gain.gain.value
+			fbDelayWet: 	 this.feedbackDelay.wet.value,
+			
+			//bitcrusher
+			bitCrusherBits:  this.bitCrusher.bits.value,
+
+			//frequency shifter
+			freqShifterFrequency: this.freqShifter.frequency.value,
+			freqShifterWet: this.freqShifter.wet.value,
+
+			//gain
+			gainAmount: 	 this.gain.gain.value
 		};
 	}
 }

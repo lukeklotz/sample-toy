@@ -214,6 +214,7 @@ export class Granulator {
 
     const newOrder: (Tone.ToneAudioNode | null)[] = effectTypes.map(type => {
         switch (type) {
+			case "freqShifter": return this.effect.freqShifter;
             case "bitCrusher": return this.effect.bitCrusher;
             case "feedbackDelay": return this.effect.feedbackDelay;
             case "reverb": return this.effect.reverb;
@@ -243,6 +244,14 @@ export class Granulator {
 	setReverbDecay(value: number): void {
 		this.effect.reverb.decay = value;
 		this.effect.reverb.generate().catch((err) => console.error('Error updating reverb decay', err));
+	}
+
+	setFreqShifterFrequency(value: number): void {
+		this.effect.freqShifter.frequency.setValueAtTime(value, Tone.now());
+	}
+
+	setFreqShifterWet(value: number): void {
+		this.effect.freqShifter.wet.setValueAtTime(value, Tone.now());
 	}
 
 	setBitCrusherBits(bits: number): void {

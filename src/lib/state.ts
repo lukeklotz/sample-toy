@@ -5,7 +5,7 @@ import { writable} from 'svelte/store';
 import { get } from 'svelte/store';
 import type { ToneAudioNode } from 'tone';
 import * as Tone from 'tone';
-import type { FeedbackDelay, BitCrusher, Reverb } from 'tone';
+import type { FrequencyShifter, FeedbackDelay, BitCrusher, Reverb } from 'tone';
 
 interface EffectMeta {
     id: string;
@@ -29,9 +29,6 @@ export class State {
         this.chunks = [];
         this.error = null;
         this.effectParams = new AudioEffect();
-        //this.effects.set(new AudioEffect());
-        //this.granulator = new Granulator();
-        //Tone.start();
 
         this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSliderChange = this.handleSliderChange.bind(this);
@@ -97,6 +94,7 @@ export class State {
 		return type === "feedbackDelay" ? fx.feedbackDelay
 			: type === "bitCrusher" ? fx.bitCrusher
 			: type === "reverb" ? fx.reverb
+            : type === "freqShifter" ? fx.freqShifter
 			: null;
 	}
 
@@ -137,6 +135,11 @@ export class State {
                 if (param === "wet") this.granulator!.setFBDelayWet(value);
                 break;
     
+            case "freqShifter":
+                if (param === "frequency") this.granulator!.setFreqShifterFrequency(value)
+                if (param === "wet") this.granulator!.setFreqShifterWet(value)
+                break;
+
             case "gain":
                 if (param === "gain") this.granulator!.setGainValue(value);
                 break;
@@ -151,7 +154,7 @@ export class State {
         
         const nodes = effectTypes
             .map(type => this.getNodeByType(type))
-            .filter((node): node is FeedbackDelay | BitCrusher | Reverb => node !== null);
+            .filter((node): node is FrequencyShifter | FeedbackDelay | BitCrusher | Reverb => node !== null);
         
         this.effectOrder.set(nodes);
     }

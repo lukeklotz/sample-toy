@@ -14,7 +14,8 @@
 	export const effectsMeta = writable([
 		{ id: nanoid(), name: 'Bit Crusher', type: 'bitCrusher' },
 		{ id: nanoid(), name: 'Feedback Delay', type: 'feedbackDelay' },
-		{ id: nanoid(), name: 'Reverb', type: 'reverb' }
+		{ id: nanoid(), name: 'Reverb', type: 'reverb' },
+		{ id: nanoid(), name: 'Frequency Shifter', type: 'freqShifter' },
 	]);
 
 	// Function to sync chunks with state
@@ -202,6 +203,17 @@
 				<input type="range" min="0" max="1" step="0.05"
 					on:input={(e) => state?.handleSliderChange("reverb", "wet", parseFloat(e.target.value))} />
 			{/if}
+
+			{#if effect.type === "freqShifter"}
+				<label>Frequency Shifter</label>
+				<input type="range" min="0" max="20000" step="0.5"
+					on:input={(e) => state?.handleSliderChange("freqShifter", "frequency", parseFloat(e.target.value))} />
+
+				<label>Wet</label>
+				<input type="range" min="0" max="1" step="0.05"
+					on:input={(e) => state?.handleSliderChange("freqShifter", "wet", parseFloat(e.target.value))} />
+			{/if}
+				
 			</details>
 		{/each}
 	</div>
