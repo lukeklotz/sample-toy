@@ -218,6 +218,7 @@ export class Granulator {
             case "bitCrusher": return this.effect.bitCrusher;
             case "feedbackDelay": return this.effect.feedbackDelay;
             case "reverb": return this.effect.reverb;
+			case "gain" : return this.effect.gain;
             default:
                 console.warn(`Unknown effect type: ${type}`);
                 return null;
@@ -237,6 +238,7 @@ export class Granulator {
 
 	//TODO: Add error handling to all setters
 
+	//reverb 
 	setReverbWet(value: number): void {
 		this.effect.reverb.wet.setValueAtTime(value, Tone.now());
 	}
@@ -246,6 +248,7 @@ export class Granulator {
 		this.effect.reverb.generate().catch((err) => console.error('Error updating reverb decay', err));
 	}
 
+	//frequency shifter
 	setFreqShifterFrequency(value: number): void {
 		this.effect.freqShifter.frequency.setValueAtTime(value, Tone.now());
 	}
@@ -254,10 +257,12 @@ export class Granulator {
 		this.effect.freqShifter.wet.setValueAtTime(value, Tone.now());
 	}
 
+	//bit crusher
 	setBitCrusherBits(bits: number): void {
 		this.effect.bitCrusher.bits.setValueAtTime(bits, Tone.now());
 	}
 
+	//delay
 	setFBDelayTime(value: number): void {
 		this.effect.feedbackDelay.delayTime.setValueAtTime(value, Tone.now());
 	}
@@ -270,11 +275,17 @@ export class Granulator {
 		this.effect.feedbackDelay.wet.setValueAtTime(value, Tone.now());
 	}
 
+	//gain 
 	setGainValue(value: number): void {
 		this.effect.gain.gain.setValueAtTime(value, Tone.now());
+		console.log("gain amount: ", this.effect.gain.gain.value)
 	}
 
 	getParameters() {
 		return this.effect.getEffectParameters();
+	}
+
+	getGainEffect() {
+		return this.effect.gain;
 	}
 }

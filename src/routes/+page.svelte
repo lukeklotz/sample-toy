@@ -18,10 +18,14 @@
 		{ id: nanoid(), name: 'Frequency Shifter', type: 'freqShifter' },
 	]);
 
-	// Function to sync chunks with state
+	// sync chunks with state
 	function updateChunks() {
 		if (state) {
 			chunks = state.getChunks();
+			if (!chunks) {
+			console.error('Failed to get chunks from state');
+			return;
+		}
 			console.log('Chunks updated:', chunks.length);
 		}
 	}

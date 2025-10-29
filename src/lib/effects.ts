@@ -7,7 +7,11 @@ export class AudioEffect {
 	feedbackDelay: Tone.FeedbackDelay;
 	freqShifter: Tone.FrequencyShifter;
 
+	//first node of effects chain
+	//acts as entry point for the effects chain
 	effectChain: Tone.ToneAudioNode | null;
+
+	//the rest of the effects in the chain
 	effectsList: Tone.ToneAudioNode[];
 
 	constructor() {
@@ -43,12 +47,17 @@ export class AudioEffect {
 		this.effectsList.forEach(effect => effect.disconnect());
 
         this.effectChain = this.effectsList[0];
+		console.log("build effects chain called: ", this.effectChain)
 
 		for (let i = 0; i < this.effectsList.length - 1; i++) {
 			this.effectsList[i].connect(this.effectsList[i + 1]);
 		}
 
 		this.effectsList[this.effectsList.length - 1].connect(Tone.getDestination());
+		this.effectsList[this.effectsList.length - 1].connect(this.gain)
+		
+		
+		console.log("effect List after reconnect: ", this.effectsList)
 	}
 
 	reorderEffects(newEffectsList: Tone.ToneAudioNode[]) {
@@ -100,7 +109,7 @@ export class AudioEffect {
 			freqShifterWet: this.freqShifter.wet.value,
 
 			//gain
-			gainAmount: 	 this.gain.gain.value
+			gainAmount: 	 this.gain.gain.value,
 		};
 	}
 }

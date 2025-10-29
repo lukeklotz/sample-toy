@@ -5,13 +5,7 @@ import { writable} from 'svelte/store';
 import { get } from 'svelte/store';
 import type { ToneAudioNode } from 'tone';
 import * as Tone from 'tone';
-import type { FrequencyShifter, FeedbackDelay, BitCrusher, Reverb } from 'tone';
-
-interface EffectMeta {
-    id: string;
-    name: string;
-    type: "bitCrusher" | "feedbackDelay" | "reverb";
-}
+import type { FrequencyShifter, FeedbackDelay, BitCrusher, Reverb, Gain } from 'tone';
 
 export class State {
     private envelope: EnvelopeParams;
@@ -95,6 +89,7 @@ export class State {
 			: type === "bitCrusher" ? fx.bitCrusher
 			: type === "reverb" ? fx.reverb
             : type === "freqShifter" ? fx.freqShifter
+            : type === "gain" ? fx.gain
 			: null;
 	}
 
@@ -154,7 +149,11 @@ export class State {
         
         const nodes = effectTypes
             .map(type => this.getNodeByType(type))
-            .filter((node): node is FrequencyShifter | FeedbackDelay | BitCrusher | Reverb => node !== null);
+            .filter((node): node is FrequencyShifter | FeedbackDelay | BitCrusher | Reverb | Gain => node !== null);
+        
+        nodes.push(this.granulator!.getGainEffect());
+
+        console.log("nodes: ", nodes);
         
         this.effectOrder.set(nodes);
     }
