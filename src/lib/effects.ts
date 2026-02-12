@@ -53,9 +53,7 @@ export class AudioEffect {
 			this.effectsList[i].connect(this.effectsList[i + 1]);
 		}
 
-		this.effectsList[this.effectsList.length - 1].connect(Tone.getDestination());
-		this.effectsList[this.effectsList.length - 1].connect(this.gain)
-		
+		this.effectsList[this.effectsList.length - 1].connect(Tone.getDestination());	
 		
 		console.log("effect List after reconnect: ", this.effectsList)
 	}

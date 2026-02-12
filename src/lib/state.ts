@@ -151,6 +151,7 @@ export class State {
             .map(type => this.getNodeByType(type))
             .filter((node): node is FrequencyShifter | FeedbackDelay | BitCrusher | Reverb | Gain => node !== null);
         
+        //append gain to the end of the chain
         nodes.push(this.granulator!.getGainEffect());
 
         console.log("nodes: ", nodes);
@@ -158,7 +159,24 @@ export class State {
         this.effectOrder.set(nodes);
     }
 
+    //event is 
+    private handleEnvelopeChange(setter: (value: number) => void): (event: Event) => void {
+        return (event: Event) => {
+            const input = event.target as HTMLInputElement;
+            const value = parseFloat(input.value);
+            if (this.envelope) {
+                setter(value);
+                this.granulator?.updateGainEnvelopeChange();
+            }
+        };
+    }
 
+    readonly handleAttackChange = this.handleEnvelopeChange((val) => this.envelope!.setAttack(val));
+    readonly handleDecayChange = this.handleEnvelopeChange((val) => this.envelope!.setDecay(val));
+    readonly handleSustainChange = this.handleEnvelopeChange((val) => this.envelope!.setSustain(val));
+    readonly handleReleaseChange = this.handleEnvelopeChange((val) => this.envelope!.setRelease(val));
+
+    /*
     //Envelope control
     async handleAttackChange(event: Event) {
         const input = event.target as HTMLInputElement;
@@ -192,7 +210,7 @@ export class State {
         this.envelope.setRelease(rel);
         }
     }
-
+    */
 	//update number of audio slices ("chunks")
 	async updateChunks(event: Event) {
 		const input = event.target as HTMLInputElement;

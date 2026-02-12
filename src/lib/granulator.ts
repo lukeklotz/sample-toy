@@ -60,17 +60,22 @@ export class Granulator {
 			// Create envelope
 			this.envelope = new Tone.AmplitudeEnvelope({
 				attack: 0.5, 
-				decay: 0.1,
+				decay: 0.5,
 				sustain: 1.0,
-				release: 0.1
+				release: 0.3
 			});
 
+			console.log("envelope created: ", this.envelope);
+			/*
 			const effectInput = this.effect.getEffectChainInput();
 			if (effectInput) {
 				this.envelope.connect(effectInput);
 			} else {
 				throw new Error('No effect chain input available')
 			}
+			*/
+
+			this.envelope.connect(this.effect.gain);
 			console.log("Granulator object created successfully");
 		} catch (error) {
 			console.error('Error creating Granulator:', error);
@@ -141,50 +146,38 @@ export class Granulator {
 	}
 
 	async playChunk(chunk: AudioChunk, level: EnvelopeParams): Promise<void> {
-		// Stop any currently playing chunk  
-    
+		// Stop any currently playing chunk   
 		if (this.currentSource) {
 			this.currentSource.stop();
 			this.currentSource.disconnect();
 			this.currentSource = null;
 		}
-
+		// suspended state can occur if the user hasn't interacted with the page yet, so we need to resume it before playing  
 		if (this.audioContext.state === 'suspended') {
 			await this.audioContext.resume();
 		}
-
-			if (!chunk.buffer) {
-				console.error('No buffer available for chunk');
-				return;
-			}
-		/*
-			const envelope = new Tone.AmplitudeEnvelope({
-				attack: level.getAttack(),
-				decay: level.getDecay(),
-				sustain: level.getSustain(),
-				release: level.getRelease()
-			}).toDestination();
-		*/
+		if (!chunk.buffer) {
+			console.error('No buffer available for chunk');
+			return;
+		}
 		this.envelope.attack = level.getAttack();
 		this.envelope.decay = level.getDecay();
 		this.envelope.sustain = level.getSustain();
 		this.envelope.release = level.getRelease();
 
-
 		// Create new source node
 		this.currentSource = this.audioContext.createBufferSource();
 		this.currentSource.buffer = chunk.buffer;
 
+
 		// connect raw sample slice to envelope
 		try {
 			Tone.connect(this.currentSource, this.envelope);
-      		//Tone.connect(this.currentSource, this.effect.getEffectChainInput());
-			//this.envelope.connect(this.effect.getEffectChainInput());
+			this.effect.connect(this.envelope);
 		} catch (error) {
 			console.error('Error connecting nodes:', error);
 			return;
 		}
-
 		// Start playback
 		const now = this.audioContext.currentTime;
 		try {
@@ -277,8 +270,28 @@ export class Granulator {
 
 	//gain 
 	setGainValue(value: number): void {
+		//attach envelope
+		this.envelope = new Tone.AmplitudeEnvelope({
+			attack: this.envelope.attack,
+			decay: this.envelope.decay,
+			sustain: this.envelope.sustain,
+			release: this.envelope.release
+		});
+		Tone.connect(this.envelope, this.effect.gain);
 		this.effect.gain.gain.setValueAtTime(value, Tone.now());
 		console.log("gain amount: ", this.effect.gain.gain.value)
+		console.log("envelope connected to gain: ", this.envelope, this.effect.gain);
+	}
+
+	updateGainEnvelopeChange(): void {
+		this.envelope = new Tone.AmplitudeEnvelope({
+			attack: this.envelope.attack,
+			decay: this.envelope.decay,
+			sustain: this.envelope.sustain,
+			release: this.envelope.release
+		});
+		Tone.connect(this.envelope, this.effect.gain);
+		console.log("envelope updated and reconnected to gain: ", this.envelope, this.effect.gain);
 	}
 
 	getParameters() {
