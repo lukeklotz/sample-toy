@@ -146,10 +146,12 @@ export class Granulator {
 	}
 
 	async playChunk(chunk: AudioChunk, level: EnvelopeParams): Promise<void> {
-		// Stop any currently playing chunk   
+		// Fade out and stop any currently playing chunks
 		if (this.currentSource) {
-			this.currentSource.stop();
-			this.currentSource.disconnect();
+			this.envelope.triggerRelease(this.audioContext.currentTime);
+			// Schedule stop after release completes
+			const releaseTime = level.getRelease();
+			this.currentSource.stop(this.audioContext.currentTime + releaseTime);
 			this.currentSource = null;
 		}
 		// suspended state can occur if the user hasn't interacted with the page yet, so we need to resume it before playing  
@@ -223,7 +225,8 @@ export class Granulator {
 
   stop(): void {
 		if (this.currentSource) {
-			this.currentSource.stop();
+			// Fade out current source
+			this.currentSource.stop(this.audioContext.currentTime + 0.1); // stop after 100ms fade out
 			this.currentSource.disconnect();
 			this.currentSource = null;
 		}
