@@ -20,16 +20,6 @@ export class AudioEffect {
 		this.gain = new Tone.Gain(1);
 		this.feedbackDelay = new Tone.FeedbackDelay({ delayTime: 0.3, feedback: 0.5, wet: 0.5 });
 		this.freqShifter = new Tone.FrequencyShifter({ frequency: 240, wet: 1});
-		
-		/*
-		this.effectChain = this.bitCrusher.chain(
-			this.feedbackDelay,
-			this.reverb,
-			this.gain,
-			Tone.getDestination()
-		);
-		*/
-
 		this.effectChain = null;
 
 		this.effectsList = [

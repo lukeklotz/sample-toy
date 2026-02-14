@@ -66,15 +66,6 @@ export class Granulator {
 			});
 
 			console.log("envelope created: ", this.envelope);
-			/*
-			const effectInput = this.effect.getEffectChainInput();
-			if (effectInput) {
-				this.envelope.connect(effectInput);
-			} else {
-				throw new Error('No effect chain input available')
-			}
-			*/
-
 			this.envelope.connect(this.effect.gain);
 			console.log("Granulator object created successfully");
 		} catch (error) {
@@ -231,8 +222,6 @@ export class Granulator {
 			this.currentSource = null;
 		}
 	}
-
-	//TODO: Add error handling to all setters
 
 	//reverb 
 	setReverbWet(value: number): void {

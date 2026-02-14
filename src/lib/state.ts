@@ -93,25 +93,6 @@ export class State {
 			: null;
 	}
 
-    /*
-    async handleRecord(event: KeyboardEvent) {
-        //start
-        if (event.key === "r" && !isRecording) {
-          if (granulator) {
-            granulator.record(true);
-            isRecording = true;
-          }
-        }
-        //stop
-        else if(event.key === "r" && isRecording) {
-          if (granulator) {
-            granulator.record(false);
-            isRecording = false;
-          }
-        }
-      }
-
-      */
 
     handleSliderChange(effectType: string, param: string, value: number) {
         switch (effectType) {
@@ -159,7 +140,6 @@ export class State {
         this.effectOrder.set(nodes);
     }
 
-    //event is 
     private handleEnvelopeChange(setter: (value: number) => void): (event: Event) => void {
         return (event: Event) => {
             const input = event.target as HTMLInputElement;
@@ -176,41 +156,6 @@ export class State {
     readonly handleSustainChange = this.handleEnvelopeChange((val) => this.envelope!.setSustain(val));
     readonly handleReleaseChange = this.handleEnvelopeChange((val) => this.envelope!.setRelease(val));
 
-    /*
-    //Envelope control
-    async handleAttackChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const atk = parseFloat(input.value);
-        console.log(atk);
-        if (this.envelope) {
-        this.envelope.setAttack(atk);
-        }
-    }
-
-    async handleDecayChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const dec = parseFloat(input.value);
-        if (this.envelope) {
-        this.envelope.setDecay(dec);
-        }
-    }
-
-    async handleSustainChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const sus = parseFloat(input.value);
-        if (this.envelope) {
-        this.envelope.setSustain(sus);
-        }
-    }
-
-    async handleReleaseChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const rel = parseFloat(input.value);
-        if (this.envelope) {
-        this.envelope.setRelease(rel);
-        }
-    }
-    */
 	//update number of audio slices ("chunks")
 	async updateChunks(event: Event) {
 		const input = event.target as HTMLInputElement;
