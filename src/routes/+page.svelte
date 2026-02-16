@@ -111,8 +111,8 @@
             type="range"
             id="envelope-attack"
             min="0"
-            max="2"
-            value="0"
+            max="1"
+            value="0.3"
             step="0.01"
             on:input={state?.handleAttackChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
@@ -125,8 +125,8 @@
             type="range"
             id="envelope-decay"
             min="0"
-            max="2"
-            value="0"
+            max="1"
+            value="0.3"
             step="0.01"
             on:input={state?.handleDecayChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
@@ -153,8 +153,8 @@
             type="range"
             id="envelope-release"
             min="0"
-            max="5"
-            value="0"
+            max="1"
+            value="0.5"
             step="0.01"
             on:input={state?.handleReleaseChange}
             class="h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-300"
@@ -180,41 +180,41 @@
 
 			{#if effect.type === "feedbackDelay"}
 				<label>Time</label>
-				<input type="range" min="0.01" max="1" step="0.01"
+				<input type="range" min="0.01" max="1" value="0.3" step="0.01"
 					on:input={(e) => state?.handleSliderChange("feedbackDelay", "delayTime", parseFloat(e.target.value))} />
 
 				<label>Feedback</label>
-				<input type="range" min="0" max="1" step="0.01"
+				<input type="range" min="0" max="1" value="0.5" step="0.01"
 					on:input={(e) => state?.handleSliderChange("feedbackDelay", "feedback", parseFloat(e.target.value))} />
 
 				<label>Wet</label>
-				<input type="range" min="0" max="1" step="0.01"
+				<input type="range" min="0" max="1" value="0.5" step="0.01"
 					on:input={(e) => state?.handleSliderChange("feedbackDelay", "wet", parseFloat(e.target.value))} />
 			{/if}
 
 			{#if effect.type === "bitCrusher"}
 				<label>Bits</label>
-				<input type="range" min="1" max="16" step="0.5"
+				<input type="range" min="1" max="16" value="16" step="0.01"
 					on:input={(e) => state?.handleSliderChange("bitCrusher", "bits", parseFloat(e.target.value))} />
 			{/if}
 
 			{#if effect.type === "reverb"}
 				<label>Decay</label>
-				<input type="range" min="0" max="20" step="0.5"
+				<input type="range" min="0" max="20" value="0.5" step="0.01"
 					on:input={(e) => state?.handleSliderChange("reverb", "decay", parseFloat(e.target.value))} />
 
 				<label>Wet</label>
-				<input type="range" min="0" max="1" step="0.05"
+				<input type="range" min="0" max="1" value="0.5" step="0.01"
 					on:input={(e) => state?.handleSliderChange("reverb", "wet", parseFloat(e.target.value))} />
 			{/if}
 
 			{#if effect.type === "freqShifter"}
 				<label>Frequency Shifter</label>
-				<input type="range" min="0" max="20000" step="0.5"
+				<input type="range" min="0" max="20000" value="0" step="0.5"
 					on:input={(e) => state?.handleSliderChange("freqShifter", "frequency", parseFloat(e.target.value))} />
 
 				<label>Wet</label>
-				<input type="range" min="0" max="1" step="0.05"
+				<input type="range" min="0" max="1" value="0" step="0.05"
 					on:input={(e) => state?.handleSliderChange("freqShifter", "wet", parseFloat(e.target.value))} />
 			{/if}
 				

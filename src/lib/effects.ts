@@ -16,10 +16,10 @@ export class AudioEffect {
 
 	constructor() {
 		this.reverb = new Tone.Reverb({ decay: 5, wet: 0.5 });
-		this.bitCrusher = new Tone.BitCrusher({ bits: 8 });
-		this.gain = new Tone.Gain(1);
+		this.bitCrusher = new Tone.BitCrusher({ bits: 16 });
+		this.gain = new Tone.Gain(0.5);
 		this.feedbackDelay = new Tone.FeedbackDelay({ delayTime: 0.3, feedback: 0.5, wet: 0.5 });
-		this.freqShifter = new Tone.FrequencyShifter({ frequency: 240, wet: 1});
+		this.freqShifter = new Tone.FrequencyShifter({ frequency: 0, wet: 0});
 		this.effectChain = null;
 
 		this.effectsList = [
