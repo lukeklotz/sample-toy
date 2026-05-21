@@ -51,8 +51,7 @@ export class Granulator {
 		}
 
 		try {
-			this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-			Tone.setContext(this.audioContext);
+			this.audioContext = Tone.getContext().rawContext as AudioContext;
 			
 			// Initialize effects
 			this.effect = new AudioEffect();

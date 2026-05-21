@@ -35,35 +35,39 @@ export class State {
         this.handleGainChange = this.handleGainChange.bind(this);
         this.playChunk = this.playChunk.bind(this);
 
-        this.initializeGranulator();
     }
 
     private async initializeGranulator() {
         try {
             await Tone.start();
             this.granulator = new Granulator();
-            this.effects.set(new AudioEffect());
+
+            if (!this.granulator) {
+                console.log("Granulator instance is null after creation"); 
+                return;
+            }
             this.initialized = true;
-            console.log("State initialized successfully");
+            this.effects.set(new AudioEffect());
+            console.log("Granulator initialized successfully");
         } catch (error) {
             console.error("Failed to initialize State:", error);
             this.error = `Failed to initialize audio engine: ${error}`;
         }
-    }
-
-    private checkInitialized(): boolean {
-        if (!this.initialized || !this.granulator) {
-            console.error('State is not properly initialized');
-            this.error = 'Audio engine not initialized';
-            return false;
-        }
-        return true;
-    }
+    } 
 
     async handleFileChange(event: Event) {
         console.log('handleFileChange called');
-        
-        if (!this.checkInitialized()) {
+
+        await this.initializeGranulator();
+ 
+        if (!this.initialized) {
+            console.log("State is not properly initialized");
+            return;
+        }
+
+        if (!this.granulator) {
+            console.error('Granulator instance is null after initialization');
+            this.error = 'Audio engine not initialized';
             return;
         }
 

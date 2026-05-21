@@ -6,6 +6,8 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { type AudioChunk } from "$lib/granulator"
+	//import { Tone } from 'tone/build/esm/core/Tone';
+	import * as Tone from 'tone';
 
 	let state: State | null = null;
 	let error: string | null = null;
@@ -31,10 +33,10 @@
 	}
 
 	// Wrapper for file change that updates chunks
-	async function handleFileChange(event: Event) {
-		if (!state) return;
-		
+	async function handleFileChange(event: Event) {	
 		try {
+			await Tone.start(); // Ensure audio context is started on user interaction
+			state = new State(); // Re-instantiate state to reset audio engine
 			await state.handleFileChange(event);
 			updateChunks(); // Update chunks after file is loaded
 		} catch (err) {
@@ -50,24 +52,6 @@
 		updateChunks(); // Update chunks after slider change
 	}
 
-	onMount(async () => {
-		if (browser) {
-			try {
-				state = new State();
-				console.log("State object created");
-				
-				// Wait a bit for async initialization if needed
-				setTimeout(() => {
-					updateChunks(); // Initial update
-				}, 100);
-			} catch (err) {
-				console.error("Error creating state:", err);
-				error = "Failed to create audio engine";
-			}
-		} else {
-			console.error("browser null");
-		}
-	});
 </script>
 
 <div class="flex h-screen font-mono">
@@ -75,14 +59,14 @@
 	<div class="border-black-700 w-1/4 border-r p-4">
 		<h1 class="text-1xl mb-4">[ Sample Toy ]</h1>
 
-		{#if state}
 		<input
 			type="file"
 			accept="audio/*"
 			on:change={handleFileChange}
 			class="mb-2 block file:mr-4 file:rounded file:border-black file:py-2 file:text-black hover:file:bg-blue-600"
 		/>
-
+		
+		{#if state}
 		<!-- # of Chunks -->
     <details class="mb-4 rounded-md border bg-gray-50 p-4">
       <summary class="cursor-pointer text-sm font-semibold">[ # of slices ]</summary>
