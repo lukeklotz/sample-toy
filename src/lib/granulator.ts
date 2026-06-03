@@ -25,6 +25,7 @@ export class Granulator {
 	private currentSource: AudioBufferSourceNode | null = null;
 	private effect: AudioEffect;
   	private envelope: Tone.AmplitudeEnvelope;
+	private envelopeTriggerOffset: number = 0.015; // hacky method for smoothing attack phase of envelope
 
 	/*
 	constructor() {

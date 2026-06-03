@@ -12,7 +12,6 @@ export class State {
     private granulator: Granulator | null = null;
     private chunks: AudioChunk[];
     private error: string | null;
-    private effectParams: AudioEffect;
     private effects = writable<AudioEffect | null>(null);
     private effectOrder = writable<ToneAudioNode[]>([]);
     private initialized: boolean = false;
@@ -22,7 +21,6 @@ export class State {
         this.envelope = new EnvelopeParams();
         this.chunks = [];
         this.error = null;
-        this.effectParams = new AudioEffect();
 
         this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSliderChange = this.handleSliderChange.bind(this);
